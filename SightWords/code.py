@@ -4,10 +4,20 @@ import keypad
 import random
 import terminalio
 import displayio
+import audioio
+import audiocore
+import digitalio
+# Add imports for sd card access
 
 from adafruit_display_text import label
 import neopixel
 from adafruit_itertools.adafruit_itertools import cycle
+
+enable = digitalio.DigitalInOut(board.SPEAKER_ENABLE)
+enable.direction = digitalio.Direction.OUTPUT
+enable.value = True
+audio = audioio.AudioOut(board.SPEAKER)
+
 
 display = board.DISPLAY
 
@@ -28,7 +38,7 @@ GREEN = (0, 255, 0)
 CYAN = (0, 255, 255)
 BLUE = (0, 0, 255)
 
-color_dict = {0:RED,1:GREEN,2:CYAN, 3:BLUE}
+color_dict = {0: RED, 1: GREEN, 2: CYAN, 3: BLUE}
 
 pixels = neopixel.NeoPixel(board.NEOPIXEL, 5, brightness=0.01)
 k = keypad.ShiftRegisterKeys(
@@ -39,7 +49,7 @@ k = keypad.ShiftRegisterKeys(
     value_when_pressed=True,
 )
 
-with open('words.txt', mode='rt') as f:
+with open("words.txt", mode="rt") as f:
     data = f.readlines()
     words = tuple(d.strip() for d in data)
 c = cycle(words)
@@ -47,14 +57,24 @@ c = cycle(words)
 while True:
     event = k.events.get()
     if not event:
-        pixels.fill((0,0,0))
+        pixels.fill((0, 0, 0))
     elif event.pressed:
-        if event.key_number == 3:
-            color = (random.randint(0,255),random.randint(0,255), random.randint(0,255))
-            #print(color)
+        if event.key_number == 3: # Random color on neopixels.
+            color = (
+                random.randint(0, 255),
+                random.randint(0, 255),
+                random.randint(0, 255),
+            )
+            # print(color)
             pixels.fill(color)
         elif event.key_number == 1:
-            reg_label.text = next(c)
+            reg_label.text = next(c) # Change the sight word on screen
+        elif event.key_number == 0: # Play the sound for the specified sight word
+            print(reg_label.text)
+            wave_file = open("hi.wav", "rb")
+            # Use SD card to pull files from SD card. If not available, play default from main storage saying to load SD card.
+            wave = audiocore.WaveFile(wave_file)
+            audio.play(wave)
         else:
             color = color_dict[event.key_number]
             pixels.fill(color)
