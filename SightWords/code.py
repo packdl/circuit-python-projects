@@ -7,6 +7,7 @@ import displayio
 import audioio
 import audiocore
 import digitalio
+
 # Add imports for sd card access
 
 from adafruit_display_text import label
@@ -49,9 +50,9 @@ k = keypad.ShiftRegisterKeys(
     value_when_pressed=True,
 )
 
-with open("words.txt", mode="rt") as f:
+with open("firstgradewords.txt", mode="rt") as f:
     data = f.readlines()
-    words = tuple(d.strip() for d in data)
+    words = tuple(d.strip() for d in data if "+" not in d)
 c = cycle(words)
 
 while True:
@@ -59,7 +60,7 @@ while True:
     if not event:
         pixels.fill((0, 0, 0))
     elif event.pressed:
-        if event.key_number == 3: # Random color on neopixels.
+        if event.key_number == 3:  # Random color on neopixels.
             color = (
                 random.randint(0, 255),
                 random.randint(0, 255),
@@ -68,10 +69,13 @@ while True:
             # print(color)
             pixels.fill(color)
         elif event.key_number == 1:
-            reg_label.text = next(c) # Change the sight word on screen
-        elif event.key_number == 0: # Play the sound for the specified sight word
-            print(reg_label.text)
-            wave_file = open("hi.wav", "rb")
+            reg_label.text = next(c)  # Change the sight word on screen
+        elif event.key_number == 0:  # Play the sound for the specified sight word
+            try:
+                filename = "".join(let for let in reg_label.text if let.isalpha())
+                wave_file = open("/wav_files/" + filename + ".wav", "rb")
+            except:
+                continue
             # Use SD card to pull files from SD card. If not available, play default from main storage saying to load SD card.
             wave = audiocore.WaveFile(wave_file)
             audio.play(wave)
@@ -79,4 +83,4 @@ while True:
             color = color_dict[event.key_number]
             pixels.fill(color)
 
-    time.sleep(1)
+    time.sleep(0.5)
